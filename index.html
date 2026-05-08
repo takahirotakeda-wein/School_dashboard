@@ -436,7 +436,7 @@ function renderHypoSteps(){
         ?'width:16px;height:16px;border-radius:3px;border:1.5px solid #fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;background:rgba(255,255,255,0.3);'
         :'width:16px;height:16px;border-radius:3px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;';
       const chk=isMulti?`<span style="${chkStyle}">${isSel?'✓':''}</span>`:'';
-      return`<button style="${btnStyle}" onclick="selectAns(${qi},${JSON.stringify(o)},${isMulti})">${chk}<span>${o}</span></button>`;
+      return`<button style="${btnStyle}" data-qi="${qi}" data-oi="${oi}" class="ans-btn">${chk}<span>${o}</span></button>`;
     }).join('');
     const typeBadgeStyle=isMulti
       ?'font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;flex-shrink:0;background:#EAF3DE;color:#3B6D11;'
@@ -444,14 +444,29 @@ function renderHypoSteps(){
     return`<div style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap"><div style="width:22px;height:22px;border-radius:50%;background:#378ADD;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${qi+1}</div><div style="font-size:13px;font-weight:600;flex:1;line-height:1.5">${q.q}</div><span style="${typeBadgeStyle}">${isMulti?'複数選択':'1つ選ぶ'}</span></div><div style="display:flex;flex-wrap:wrap;gap:8px">${opts}</div></div>`;
   }).join('');
 
-  const actionsHtml=allAnswered?`<div style="background:#fff;border:0.5px solid #e0ddd5;border-radius:10px;padding:16px;margin-top:14px"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div style="padding:11px 13px;border-radius:9px;border:0.5px solid #e8e5df;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;background:#fafaf8"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div style="font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.5">${a.title}</div><div style="font-size:11px;color:#888;line-height:1.6">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div style="font-size:12px;color:#27500A;margin-top:4px;font-weight:600">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" onclick="commitAction()">これらの施策を決定する</button></div>`:`<div style="text-align:center;padding:14px 0;font-size:12px;color:#aaa">すべての質問に回答するとアクションが表示されます</div>`;
+  const actionsHtml=allAnswered?`<div style="background:#fff;border:0.5px solid #e0ddd5;border-radius:10px;padding:16px;margin-top:14px"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div style="padding:11px 13px;border-radius:9px;border:0.5px solid #e8e5df;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;background:#fafaf8"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div style="font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.5">${a.title}</div><div style="font-size:11px;color:#888;line-height:1.6">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div style="font-size:12px;color:#27500A;margin-top:4px;font-weight:600">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" id="do-commit-btn">これらの施策を決定する</button></div>`:`<div style="text-align:center;padding:14px 0;font-size:12px;color:#aaa">すべての質問に回答するとアクションが表示されます</div>`;
 
   document.getElementById('hypo-inner').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:16px">「${selDiag}」の改善施策を決める</div>${stepsHtml}${actionsHtml}`;
-}
-function selectAns(qi,val,isMulti){
-  if(isMulti){if(!answers[qi])answers[qi]=[];const idx=answers[qi].indexOf(val);if(idx>=0)answers[qi].splice(idx,1);else answers[qi].push(val);}
-  else{answers[qi]=val;}
-  renderHypoSteps();
+
+  document.querySelectorAll('.ans-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const qi=parseInt(this.getAttribute('data-qi'));
+      const oi=parseInt(this.getAttribute('data-oi'));
+      const isMulti=def.qs[qi].type==='multi';
+      const val=def.qs[qi].opts[oi];
+      if(isMulti){
+        if(!answers[qi])answers[qi]=[];
+        const idx=answers[qi].indexOf(val);
+        if(idx>=0)answers[qi].splice(idx,1);else answers[qi].push(val);
+      } else {
+        answers[qi]=val;
+      }
+      renderHypoSteps();
+    });
+  });
+
+  const commitBtn=document.getElementById('do-commit-btn');
+  if(commitBtn){commitBtn.addEventListener('click',commitAction);}
 }
 function commitAction(){
   const def=BN_DEF[selDiag];
