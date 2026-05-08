@@ -410,24 +410,42 @@ function selectDiag(key){
   selDiag=key;answers={};
   document.getElementById('hypo-area').style.display='block';
   calc();renderHypoSteps();
-  setTimeout(()=>document.getElementById('hypo-area').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+  setTimeout(()=>{
+    const el=document.getElementById('hypo-area');
+    const top=el.getBoundingClientRect().top+window.pageYOffset-20;
+    window.scrollTo({top,behavior:'smooth'});
+  },150);
 }
 function renderHypoSteps(){
   const def=BN_DEF[selDiag];if(!def)return;
   const today=selectedDate?selectedDate.getDate():new Date().getDate();
   const remaining=(parseInt(document.getElementById('t-days').value)||31)-today+1;
   const allAnswered=def.qs.every((_,qi)=>def.qs[qi].type==='multi'?(answers[qi]&&answers[qi].length>0):(answers[qi]!=null));
+
+  const SINGLE_DEFAULT='display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;border:1.5px solid #B5D4F4;background:#fff;color:#444;transition:all .15s;';
+  const SINGLE_SEL='display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;border:2px solid #185FA5;background:#378ADD;color:#fff;transition:all .15s;';
+  const MULTI_DEFAULT='display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;border:1.5px solid #C0DD97;background:#fff;color:#444;transition:all .15s;';
+  const MULTI_SEL='display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;border:2px solid #3B6D11;background:#639922;color:#fff;transition:all .15s;';
+
   const stepsHtml=def.qs.map((q,qi)=>{
     const isMulti=q.type==='multi',selVals=isMulti?(answers[qi]||[]):null,selSingle=answers[qi];
     const opts=q.opts.map(o=>{
       const isSel=isMulti?(selVals&&selVals.includes(o)):(selSingle===o);
-      const btnCls=`choice-btn ${isMulti?'choice-btn-multi':'choice-btn-single'}${isSel?' sel':''}`;
-      const chk=isMulti?`<span class="check-box">${isSel?'✓':''}</span>`:'';
-      return`<button class="${btnCls}" onclick="selectAns(${qi},${JSON.stringify(o)},${isMulti})">${chk}<span>${o}</span></button>`;
+      const btnStyle=isMulti?(isSel?MULTI_SEL:MULTI_DEFAULT):(isSel?SINGLE_SEL:SINGLE_DEFAULT);
+      const chkStyle=isSel
+        ?'width:16px;height:16px;border-radius:3px;border:1.5px solid #fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;background:rgba(255,255,255,0.3);'
+        :'width:16px;height:16px;border-radius:3px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;';
+      const chk=isMulti?`<span style="${chkStyle}">${isSel?'✓':''}</span>`:'';
+      return`<button style="${btnStyle}" onclick="selectAns(${qi},${JSON.stringify(o)},${isMulti})">${chk}<span>${o}</span></button>`;
     }).join('');
-    return`<div class="step-wrap"><div class="step-header"><div class="step-num">${qi+1}</div><div class="step-q">${q.q}</div><span class="type-badge ${isMulti?'type-multi':'type-single'}">${isMulti?'複数選択':'1つ選ぶ'}</span></div><div class="choice-row">${opts}</div></div>`;
+    const typeBadgeStyle=isMulti
+      ?'font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;flex-shrink:0;background:#EAF3DE;color:#3B6D11;'
+      :'font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;flex-shrink:0;background:#E6F1FB;color:#185FA5;';
+    return`<div style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap"><div style="width:22px;height:22px;border-radius:50%;background:#378ADD;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${qi+1}</div><div style="font-size:13px;font-weight:600;flex:1;line-height:1.5">${q.q}</div><span style="${typeBadgeStyle}">${isMulti?'複数選択':'1つ選ぶ'}</span></div><div style="display:flex;flex-wrap:wrap;gap:8px">${opts}</div></div>`;
   }).join('');
-  const actionsHtml=allAnswered?`<div class="action-out"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div class="action-item"><div class="action-pri" style="background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div class="action-title">${a.title}</div><div class="action-meta">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div class="action-effect">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" onclick="commitAction()">これらの施策を決定する</button></div>`:`<div class="pending-hint">すべての質問に回答するとアクションが表示されます</div>`;
+
+  const actionsHtml=allAnswered?`<div style="background:#fff;border:0.5px solid #e0ddd5;border-radius:10px;padding:16px;margin-top:14px"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div style="padding:11px 13px;border-radius:9px;border:0.5px solid #e8e5df;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;background:#fafaf8"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div style="font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.5">${a.title}</div><div style="font-size:11px;color:#888;line-height:1.6">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div style="font-size:12px;color:#27500A;margin-top:4px;font-weight:600">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" onclick="commitAction()">これらの施策を決定する</button></div>`:`<div style="text-align:center;padding:14px 0;font-size:12px;color:#aaa">すべての質問に回答するとアクションが表示されます</div>`;
+
   document.getElementById('hypo-inner').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:16px">「${selDiag}」の改善施策を決める</div>${stepsHtml}${actionsHtml}`;
 }
 function selectAns(qi,val,isMulti){
