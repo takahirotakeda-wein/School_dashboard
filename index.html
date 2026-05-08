@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>広告KGI管理ダッシュボード</title>
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
 #pw-screen{position:fixed;inset:0;background:#f5f4f0;display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -104,6 +105,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
 .diag-sec-label{font-size:11px;font-weight:700;letter-spacing:.04em;margin:14px 0 7px;padding-left:2px;text-transform:uppercase}
 .pending-hint{text-align:center;padding:14px 0;font-size:12px;color:#aaa}
 @media(max-width:600px){.i3{grid-template-columns:1fr 1fr}.kpi-table{font-size:11px}.kpi-table td,.kpi-table th{padding:7px 5px}}
+
 </style>
 </head>
 <body>
@@ -113,8 +115,8 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
     <div class="pw-logo">🔒</div>
     <div class="pw-title">KGI管理ダッシュボード</div>
     <div class="pw-sub">パスワードを入力してください</div>
-    <input class="pw-input" type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
-    <button class="pw-btn" onclick="checkPw()">ログイン</button>
+    <input class="pw-input" type="password" id="pw-input" placeholder="••••••••">
+    <button class="pw-btn" id="pw-btn">ログイン</button>
     <div class="pw-error" id="pw-error"></div>
   </div>
 </div>
@@ -237,6 +239,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
   <div id="施策-list"><div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0">施策がまだ決定されていません</div></div>
 </div>
 
+</div>
 </div>
 
 <script>
@@ -503,15 +506,13 @@ function updateCommittedPanel(){
 }
 function toggleSection(bId,iId){const b=document.getElementById(bId),icon=document.getElementById(iId),open=b.style.maxHeight!=='0px'&&b.style.maxHeight!=='';b.style.maxHeight=open?'0':'700px';icon.classList.toggle('open',!open);}
 
-loadData();
-updateDateUI();
-calc();
-</script>
+function init(){
+  loadData();
+  updateDateUI();
+  calc();
+}
 
-</div>
-
-<script>
-const PW_HASH='e423e2b6ac97c4a3a4b0bf0b9e53afd167fdc5b4c95cfdde55a3399f03b50ba5';
+const PW_HASH= + PW_HASH + ;
 const PW_SESSION='kgi_auth_v1';
 
 async function hashStr(str){
@@ -524,9 +525,10 @@ async function checkPw(){
   const h=await hashStr(val);
   if(h===PW_HASH){
     sessionStorage.setItem(PW_SESSION,'1');
-    document.getElementById('pw-screen').classList.add('hidden');
+    document.getElementById('pw-screen').style.display='none';
     document.getElementById('main-content').style.display='block';
     document.getElementById('pw-error').textContent='';
+    init();
   } else {
     document.getElementById('pw-error').textContent='パスワードが正しくありません';
     document.getElementById('pw-input').value='';
@@ -534,14 +536,16 @@ async function checkPw(){
   }
 }
 
-(function(){
-  if(sessionStorage.getItem(PW_SESSION)==='1'){
-    document.getElementById('pw-screen').classList.add('hidden');
-    document.getElementById('main-content').style.display='block';
-  } else {
-    setTimeout(()=>document.getElementById('pw-input').focus(),100);
-  }
-})();
+document.getElementById('pw-btn').addEventListener('click',checkPw);
+document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPw();});
+
+if(sessionStorage.getItem(PW_SESSION)==='1'){
+  document.getElementById('pw-screen').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  init();
+} else {
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
 </script>
 </body>
 </html>
