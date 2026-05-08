@@ -400,9 +400,14 @@ function calc(){
     const secCol=eff<70?'#A32D2D':eff<95?'#633806':'#27500A';
     if(sec!==prevSec){html+=`<div class="diag-sec-label" style="color:${secCol}">${sec}</div>`;prevSec=sec;}
     const isKgi=KGI_KEYS.includes(item.key),isActive=selDiag===item.key;
-    html+=`<button class="diag-btn${isActive?' active':''}" onclick="selectDiag('${item.key}')"><div class="diag-dot" style="background:${dotCol}"></div><div style="flex:1"><div style="font-size:13px;font-weight:600">${item.key} <span style="font-size:10px;background:#f0ede7;color:#888;padding:1px 7px;border-radius:10px;margin-left:4px;font-weight:600">${isKgi?'KGI':'KPI'}</span></div><div style="font-size:11px;color:#888;margin-top:2px">目標比 ${item.rate}%</div></div><span style="font-size:14px;color:#ccc">${isActive?'▲':'▼'}</span></button>`;
+    html+=`<button class="diag-btn${isActive?' active':''}" data-key="${item.key}"><div class="diag-dot" style="background:${dotCol}"></div><div style="flex:1"><div style="font-size:13px;font-weight:600">${item.key} <span style="font-size:10px;background:#f0ede7;color:#888;padding:1px 7px;border-radius:10px;margin-left:4px;font-weight:600">${isKgi?'KGI':'KPI'}</span></div><div style="font-size:11px;color:#888;margin-top:2px">目標比 ${item.rate}%</div></div><span style="font-size:14px;color:#ccc">${isActive?'▲':'▼'}</span></button>`;
   });
   document.getElementById('diag-list').innerHTML=html;
+  document.querySelectorAll('.diag-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      selectDiag(this.getAttribute('data-key'));
+    });
+  });
   updateCommittedPanel();
 }
 function selectDiag(key){
@@ -491,7 +496,10 @@ function updateCommittedPanel(){
   document.getElementById('施策-status').innerHTML=`<span class="pill ${pc}">${lbl}（${rate}%）</span>`;
   if(committedActions.length===0){document.getElementById('施策-alert').innerHTML='';document.getElementById('施策-list').innerHTML='<div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0">施策がまだ決定されていません</div>';return;}
   document.getElementById('施策-alert').innerHTML=fp<tK?`<div class="alert-box">施策が足りません。このままでは月末に <strong>${tK-fp}件</strong> 不足します。施策を追加してください。</div>`:`<div class="success-box">決定した施策で月末KGI達成の見込みです。実行状況を毎日確認しましょう。</div>`;
-  document.getElementById('施策-list').innerHTML=committedActions.map(a=>`<div class="施策card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><div style="font-size:13px;font-weight:700">${a.key}の施策（${a.acts.length}件）</div><div style="font-size:11px;color:#888;margin-top:3px;line-height:1.6">${a.acts.map(ac=>ac.title).join(' ／ ')}</div></div><button class="remove-btn" onclick="removeAction(${a.ts})">削除</button></div><div style="font-size:13px;color:#27500A;font-weight:700">+${a.gain}件（${baseProj}件 → ${a.effProj}件）</div></div>`).join('');
+  document.getElementById('施策-list').innerHTML=committedActions.map(a=>`<div class="施策card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><div style="font-size:13px;font-weight:700">${a.key}の施策（${a.acts.length}件）</div><div style="font-size:11px;color:#888;margin-top:3px;line-height:1.6">${a.acts.map(ac=>ac.title).join(' ／ ')}</div></div><button class="remove-btn" data-ts="${a.ts}">削除</button></div><div style="font-size:13px;color:#27500A;font-weight:700">+${a.gain}件（${baseProj}件 → ${a.effProj}件）</div></div>`).join('');
+  document.querySelectorAll('.remove-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){removeAction(parseInt(this.getAttribute('data-ts')));});
+  });
 }
 function toggleSection(bId,iId){const b=document.getElementById(bId),icon=document.getElementById(iId),open=b.style.maxHeight!=='0px'&&b.style.maxHeight!=='';b.style.maxHeight=open?'0':'700px';icon.classList.toggle('open',!open);}
 
