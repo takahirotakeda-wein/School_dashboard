@@ -7,6 +7,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
+#pw-screen{position:fixed;inset:0;background:#f5f4f0;display:flex;align-items:center;justify-content:center;z-index:9999}
+#pw-screen.hidden{display:none}
+.pw-card{background:#fff;border:0.5px solid #e0ddd5;border-radius:16px;padding:40px 36px;width:100%;max-width:360px;text-align:center}
+.pw-logo{font-size:28px;margin-bottom:16px}
+.pw-title{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.pw-sub{font-size:13px;color:#888;margin-bottom:28px}
+.pw-input{width:100%;padding:12px 14px;border:1.5px solid #d0cdc5;border-radius:10px;font-size:15px;font-family:inherit;text-align:center;letter-spacing:.15em;margin-bottom:10px;transition:border-color .15s}
+.pw-input:focus{outline:none;border-color:#378ADD}
+.pw-btn{width:100%;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;margin-top:4px}
+.pw-btn:hover{opacity:.85}
+.pw-error{font-size:12px;color:#A32D2D;margin-top:10px;min-height:18px}
 .topbar{background:#fff;border-bottom:0.5px solid #e0ddd5;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-title{font-size:15px;font-weight:600;color:#1a1a1a}
 .topbar-meta{font-size:12px;color:#888}
@@ -97,6 +108,18 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
 </head>
 <body>
 
+<div id="pw-screen">
+  <div class="pw-card">
+    <div class="pw-logo">🔒</div>
+    <div class="pw-title">KGI管理ダッシュボード</div>
+    <div class="pw-sub">パスワードを入力してください</div>
+    <input class="pw-input" type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">ログイン</button>
+    <div class="pw-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main-content" style="display:none">
 <div class="topbar">
   <div class="topbar-title">広告KGI管理ダッシュボード</div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -442,6 +465,42 @@ function toggleSection(bId,iId){const b=document.getElementById(bId),icon=docume
 loadData();
 updateDateUI();
 calc();
+</script>
+
+</div>
+
+<script>
+const PW_HASH='e423e2b6ac97c4a3a4b0bf0b9e53afd167fdc5b4c95cfdde55a3399f03b50ba5';
+const PW_SESSION='kgi_auth_v1';
+
+async function hashStr(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPw(){
+  const val=document.getElementById('pw-input').value;
+  const h=await hashStr(val);
+  if(h===PW_HASH){
+    sessionStorage.setItem(PW_SESSION,'1');
+    document.getElementById('pw-screen').classList.add('hidden');
+    document.getElementById('main-content').style.display='block';
+    document.getElementById('pw-error').textContent='';
+  } else {
+    document.getElementById('pw-error').textContent='パスワードが正しくありません';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+(function(){
+  if(sessionStorage.getItem(PW_SESSION)==='1'){
+    document.getElementById('pw-screen').classList.add('hidden');
+    document.getElementById('main-content').style.display='block';
+  } else {
+    setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  }
+})();
 </script>
 </body>
 </html>
