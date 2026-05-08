@@ -6,6 +6,7 @@
 <title>広告KGI管理ダッシュボード</title>
 <style>
 
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
 #pw-screen{position:fixed;inset:0;background:#f5f4f0;display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -105,6 +106,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
 .diag-sec-label{font-size:11px;font-weight:700;letter-spacing:.04em;margin:14px 0 7px;padding-left:2px;text-transform:uppercase}
 .pending-hint{text-align:center;padding:14px 0;font-size:12px;color:#aaa}
 @media(max-width:600px){.i3{grid-template-columns:1fr 1fr}.kpi-table{font-size:11px}.kpi-table td,.kpi-table th{padding:7px 5px}}
+
 
 </style>
 </head>
@@ -236,6 +238,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
   <div id="施策-list"><div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0">施策がまだ決定されていません</div></div>
 </div>
 
+</div>
 </div>
 </div>
 
@@ -473,7 +476,9 @@ function renderHypoSteps(){
 
   const actionsHtml=allAnswered?`<div style="background:#fff;border:0.5px solid #e0ddd5;border-radius:10px;padding:16px;margin-top:14px"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div style="padding:11px 13px;border-radius:9px;border:0.5px solid #e8e5df;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;background:#fafaf8"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div style="font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.5">${a.title}</div><div style="font-size:11px;color:#888;line-height:1.6">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div style="font-size:12px;color:#27500A;margin-top:4px;font-weight:600">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" id="do-commit-btn">これらの施策を決定する</button></div>`:`<div style="text-align:center;padding:14px 0;font-size:12px;color:#aaa">すべての質問に回答するとアクションが表示されます</div>`;
 
-  document.getElementById('hypo-inner').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:16px">「${selDiag}」の改善施策を決める</div>${stepsHtml}${actionsHtml}`;
+  var hypoInner=document.getElementById('hypo-inner');
+  if(!hypoInner){console.error('hypo-inner not found');return;}
+  hypoInner.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:16px">「${selDiag}」の改善施策を決める</div>${stepsHtml}${actionsHtml}`;
 
   document.querySelectorAll('.ans-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
@@ -563,7 +568,7 @@ if(sessionStorage.getItem(PW_SESSION)==='1'){
   document.getElementById('main-content').style.display='block';
   init();
 } else {
-  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  setTimeout(function(){document.getElementById('pw-input').focus();},100);
 }
 </script>
 </body>
