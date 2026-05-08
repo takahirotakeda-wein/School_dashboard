@@ -220,9 +220,6 @@ input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
   <div class="sec">改善診断 → 施策決定</div>
   <div style="font-size:13px;color:#666;margin-bottom:14px">改善が必要なKPIをタップして施策を決める</div>
   <div id="diag-list"></div>
-  <div id="hypo-area" style="display:none">
-    <div class="hypo-panel" id="hypo-inner"></div>
-  </div>
 </div>
 
 <div class="card">
@@ -414,15 +411,34 @@ function calc(){
   updateCommittedPanel();
 }
 function selectDiag(key){
-  if(selDiag===key){selDiag=null;answers={};document.getElementById('hypo-area').style.display='none';calc();return;}
+  if(selDiag===key){
+    selDiag=null;answers={};
+    var old=document.getElementById('hypo-area');
+    if(old)old.remove();
+    calc();return;
+  }
   selDiag=key;answers={};
-  document.getElementById('hypo-area').style.display='block';
-  calc();renderHypoSteps();
+  var old=document.getElementById('hypo-area');
+  if(old)old.remove();
+  calc();
+  var panel=document.createElement('div');
+  panel.id='hypo-area';
+  panel.style.cssText='margin-top:8px';
+  var inner=document.createElement('div');
+  inner.id='hypo-inner';
+  inner.className='hypo-panel';
+  panel.appendChild(inner);
+  var activeBtn=document.querySelector('.diag-btn.active');
+  if(activeBtn){
+    activeBtn.parentNode.insertBefore(panel,activeBtn.nextSibling);
+  } else {
+    document.getElementById('diag-list').appendChild(panel);
+  }
+  renderHypoSteps();
   setTimeout(()=>{
-    const el=document.getElementById('hypo-area');
-    const top=el.getBoundingClientRect().top+window.pageYOffset-20;
-    window.scrollTo({top,behavior:'smooth'});
-  },150);
+    var top=panel.getBoundingClientRect().top+window.pageYOffset-70;
+    window.scrollTo({top:top,behavior:'smooth'});
+  },100);
 }
 function renderHypoSteps(){
   const def=BN_DEF[selDiag];if(!def)return;
@@ -487,7 +503,7 @@ function commitAction(){
   const acts=def.actionLogic(answers),effProj=calcProjection(ov),gain=effProj-baseProj;
   committedActions.push({key:selDiag,acts,effProj,gain,lagDays:def.lagDays,risk:def.risk,ts:Date.now()});
   selDiag=null;answers={};
-  document.getElementById('hypo-area').style.display='none';
+  var ha=document.getElementById('hypo-area');if(ha)ha.remove();
   saveData();updateCommittedPanel();calc();
 }
 function removeAction(ts){committedActions=committedActions.filter(a=>a.ts!==ts);saveData();updateCommittedPanel();calc();}
