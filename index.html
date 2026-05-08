@@ -459,7 +459,7 @@ function renderHypoSteps(){
 
   const stepsHtml=def.qs.map((q,qi)=>{
     const isMulti=q.type==='multi',selVals=isMulti?(answers[qi]||[]):null,selSingle=answers[qi];
-    const opts=q.opts.map(o=>{
+    const opts=q.opts.map((o,oi)=>{
       const isSel=isMulti?(selVals&&selVals.includes(o)):(selSingle===o);
       const btnStyle=isMulti?(isSel?MULTI_SEL:MULTI_DEFAULT):(isSel?SINGLE_SEL:SINGLE_DEFAULT);
       const chkStyle=isSel
