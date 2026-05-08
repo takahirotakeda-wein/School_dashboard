@@ -420,7 +420,7 @@ function selectDiag(key){
   selDiag=key;answers={};
   var old=document.getElementById('hypo-area');
   if(old)old.remove();
-  calc();
+  // calc()でdiag-listが再描画されるので、先にパネルを作っておく
   var panel=document.createElement('div');
   panel.id='hypo-area';
   panel.style.cssText='margin-top:8px';
@@ -428,6 +428,9 @@ function selectDiag(key){
   inner.id='hypo-inner';
   inner.className='hypo-panel';
   panel.appendChild(inner);
+  // calcを呼ぶ（diag-listを再描画、activeボタンが生成される）
+  calc();
+  // calc後にactiveBtnを探してパネルを挿入
   var activeBtn=document.querySelector('.diag-btn.active');
   if(activeBtn){
     activeBtn.parentNode.insertBefore(panel,activeBtn.nextSibling);
