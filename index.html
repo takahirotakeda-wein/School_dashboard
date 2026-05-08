@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>広告KGI管理ダッシュボード</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
+.topbar{background:#fff;border-bottom:0.5px solid #e0ddd5;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:600;color:#1a1a1a}
+.topbar-meta{font-size:12px;color:#888}
+.save-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:#EAF3DE;color:#3B6D11;font-weight:500}
+.wrap{max-width:800px;margin:0 auto;padding:24px 16px 60px}
+.card{background:#fff;border:0.5px solid #e0ddd5;border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.sec{font-size:10px;font-weight:600;color:#999;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
+label{font-size:12px;color:#666;display:block;margin-bottom:3px}
+input[type=number],select{width:100%;padding:7px 10px;border:0.5px solid #d0cdc5;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit}
+input[type=number]:focus,select:focus{outline:none;border-color:#378ADD}
+.toggle-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.toggle-icon{font-size:12px;color:#999;transition:transform .2s;display:inline-block}
+.toggle-icon.open{transform:rotate(90deg)}
+.collapsible{overflow:hidden;transition:max-height .3s ease}
+.date-btn{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border:0.5px solid #d0cdc5;border-radius:10px;background:#fff;cursor:pointer;transition:background .15s}
+.date-btn:hover{background:#f5f4f0}
+.cal-wrap{margin-top:10px;background:#fff;border:0.5px solid #d0cdc5;border-radius:12px;padding:14px;width:fit-content;display:none}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-title{font-size:13px;font-weight:600}
+.cal-nav{background:transparent;border:none;cursor:pointer;font-size:18px;color:#666;padding:2px 8px;border-radius:6px}
+.cal-nav:hover{background:#f5f4f0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,36px);gap:3px}
+.cal-day-label{text-align:center;font-size:11px;color:#999;padding:4px 0;font-weight:600}
+.cal-day{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:13px;cursor:pointer;border:none;background:transparent;color:#1a1a1a;transition:background .1s;font-family:inherit}
+.cal-day:hover:not([disabled]){background:#f5f4f0}
+.cal-day.selected{background:#378ADD;color:#fff;font-weight:600}
+.cal-day.today-marker{border:1.5px solid #378ADD;color:#185FA5;font-weight:600}
+.cal-day[disabled]{color:#ccc;cursor:default}
+.hint-box{background:#f5f4f0;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;margin-bottom:14px;line-height:1.7}
+.i2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.i3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.kpi-table{width:100%;border-collapse:collapse;font-size:12px}
+.kpi-table th{font-size:10px;color:#999;font-weight:600;padding:6px 8px;border-bottom:0.5px solid #e8e5df;text-align:right;white-space:nowrap;letter-spacing:.03em}
+.kpi-table th:first-child{text-align:left}
+.kpi-table td{padding:9px 8px;border-bottom:0.5px solid #f0ede7;text-align:right;vertical-align:middle;white-space:nowrap}
+.kpi-table td:first-child{text-align:left;font-weight:500;font-size:13px}
+.kpi-table tr:last-child td{border-bottom:none}
+.kpi-table tr:hover td{background:#fafaf8}
+.val-ok{color:#27500A;font-weight:600}
+.val-warn{color:#633806;font-weight:600}
+.val-ng{color:#A32D2D;font-weight:600}
+.val-muted{color:#bbb}
+.pill{display:inline-flex;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-ok{background:#EAF3DE;color:#27500A}
+.pill-warn{background:#FAEEDA;color:#633806}
+.pill-ng{background:#FCEBEB;color:#A32D2D}
+.diag-btn{width:100%;text-align:left;padding:11px 14px;border-radius:10px;border:0.5px solid #e0ddd5;background:#fff;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px;transition:all .15s;font-family:inherit}
+.diag-btn:hover{background:#f5f4f0;border-color:#ccc}
+.diag-btn.active{border-color:#378ADD;background:#E6F1FB}
+.diag-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.hypo-panel{background:#f5f4f0;border-radius:12px;padding:16px;margin-top:4px}
+.step-wrap{margin-bottom:18px}
+.step-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.step-num{width:22px;height:22px;border-radius:50%;background:#378ADD;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-q{font-size:13px;font-weight:600;flex:1;line-height:1.5}
+.type-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;flex-shrink:0}
+.type-single{background:#E6F1FB;color:#185FA5}
+.type-multi{background:#EAF3DE;color:#3B6D11}
+.choice-row{display:flex;flex-wrap:wrap;gap:8px}
+.choice-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:inherit;font-weight:500}
+.choice-btn-single{border:1.5px solid #B5D4F4;background:#fff;color:#444}
+.choice-btn-single:hover{border-color:#378ADD;background:#E6F1FB;color:#0C447C}
+.choice-btn-single.sel{border:2px solid #185FA5;background:#378ADD;color:#fff}
+.choice-btn-multi{border:1.5px solid #C0DD97;background:#fff;color:#444}
+.choice-btn-multi:hover{border-color:#639922;background:#EAF3DE;color:#27500A}
+.choice-btn-multi.sel{border:2px solid #3B6D11;background:#639922;color:#fff}
+.check-box{width:16px;height:16px;border-radius:3px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.action-out{background:#fff;border:0.5px solid #e0ddd5;border-radius:10px;padding:16px;margin-top:14px}
+.action-item{padding:11px 13px;border-radius:9px;border:0.5px solid #e8e5df;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;background:#fafaf8}
+.action-item:last-child{margin-bottom:0}
+.action-pri{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.action-title{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.5}
+.action-meta{font-size:11px;color:#888;line-height:1.6}
+.action-effect{font-size:12px;color:#27500A;margin-top:4px;font-weight:600}
+.commit-btn{width:100%;padding:12px;border-radius:9px;border:1.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;transition:all .15s;font-family:inherit}
+.commit-btn:hover{background:#639922;color:#fff;border-color:#639922}
+.alert-box{background:#FCEBEB;border:0.5px solid #F09595;border-radius:9px;padding:13px 15px;font-size:13px;color:#791F1F;margin-top:10px;line-height:1.7}
+.success-box{background:#EAF3DE;border:0.5px solid #97C459;border-radius:9px;padding:13px 15px;font-size:13px;color:#27500A;margin-top:10px;line-height:1.7}
+.施策card{background:#fff;border:0.5px solid #e0ddd5;border-radius:9px;padding:13px 15px;margin-bottom:8px}
+.remove-btn{font-size:12px;color:#A32D2D;border:none;background:transparent;cursor:pointer;padding:3px 7px;border-radius:5px;font-family:inherit}
+.remove-btn:hover{background:#FCEBEB}
+.proj-box{background:#f5f4f0;border-radius:9px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.divider{height:0.5px;background:#e8e5df;margin:12px 0}
+.diag-sec-label{font-size:11px;font-weight:700;letter-spacing:.04em;margin:14px 0 7px;padding-left:2px;text-transform:uppercase}
+.pending-hint{text-align:center;padding:14px 0;font-size:12px;color:#aaa}
+@media(max-width:600px){.i3{grid-template-columns:1fr 1fr}.kpi-table{font-size:11px}.kpi-table td,.kpi-table th{padding:7px 5px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">広告KGI管理ダッシュボード</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="topbar-meta" id="last-saved"></span>
+    <span class="save-badge" id="save-badge" style="display:none">保存済み</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="card">
+  <div class="toggle-row" onclick="toggleSection('target-body','target-icon')">
+    <span class="toggle-icon" id="target-icon">▶</span>
+    <span style="font-size:13px;font-weight:600">月間目標設定</span>
+    <span style="font-size:11px;color:#aaa;margin-left:auto">タップして開閉</span>
+  </div>
+  <div class="collapsible" id="target-body" style="max-height:0">
+    <div style="padding-top:12px">
+      <div class="i3" style="margin-bottom:9px">
+        <div><label>当月の日数</label><select id="t-days" onchange="saveAndCalc()"><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31" selected>31日</option></select></div>
+        <div><label>契約数KGI（件）</label><input type="number" id="t-keiyaku" value="50" oninput="saveAndCalc()"></div>
+        <div><label>売上目標（万円）</label><input type="number" id="t-uriage" value="4000" oninput="saveAndCalc()"></div>
+      </div>
+      <div class="i3" style="margin-bottom:9px">
+        <div><label>広告費目標（万円）</label><input type="number" id="t-adcost" value="865" oninput="saveAndCalc()"></div>
+        <div><label>LINE追加数（件）</label><input type="number" id="t-line" value="917" oninput="saveAndCalc()"></div>
+        <div><label>面談予約数（件）</label><input type="number" id="t-yoyaku" value="260" oninput="saveAndCalc()"></div>
+      </div>
+      <div class="i3" style="margin-bottom:9px">
+        <div><label>面談実施数（件）</label><input type="number" id="t-mendan" value="167" oninput="saveAndCalc()"></div>
+        <div><label>面談予約率（%）</label><input type="number" id="t-lrate" value="18" step="0.1" oninput="saveAndCalc()"></div>
+        <div><label>キャンセル率（%）</label><input type="number" id="t-cancel" value="36" step="0.1" oninput="saveAndCalc()"></div>
+      </div>
+      <div class="i3">
+        <div><label>契約率（%）</label><input type="number" id="t-close" value="30" step="0.1" oninput="saveAndCalc()"></div>
+        <div><label>CPA目標（万円）</label><input type="number" id="t-cpa" value="3.7" step="0.1" oninput="saveAndCalc()"></div>
+        <div><label>CPO目標（万円）</label><input type="number" id="t-cpo" value="17.3" step="0.1" oninput="saveAndCalc()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="sec">実績入力</div>
+  <div style="margin-bottom:12px">
+    <label style="margin-bottom:7px">今日の日付を選択（前日までの実績を入力）</label>
+    <button class="date-btn" onclick="toggleCal()">
+      <span style="font-size:20px">📅</span>
+      <div>
+        <div style="font-size:15px;font-weight:700" id="date-btn-label">—</div>
+        <div style="font-size:11px;color:#888" id="date-btn-sub">日付を選んでください</div>
+      </div>
+    </button>
+    <div class="cal-wrap" id="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="prevMonth()">‹</button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-nav" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+  <div class="hint-box">今日が <strong id="hint-today">—日</strong> なら、入力するのは <strong id="hint-prev">前日まで</strong> の累計実績です。</div>
+  <div class="i3" style="margin-bottom:9px">
+    <div><label>契約数（件・累計）</label><input type="number" id="a-keiyaku" value="4" oninput="saveAndCalc()"></div>
+    <div><label>売上（万円・累計）</label><input type="number" id="a-uriage" value="319" oninput="saveAndCalc()"></div>
+    <div><label>広告費（万円・累計）</label><input type="number" id="a-adcost" value="89" oninput="saveAndCalc()"></div>
+  </div>
+  <div class="i3" style="margin-bottom:9px">
+    <div><label>LINE追加数（件・累計）</label><input type="number" id="a-line" value="156" oninput="saveAndCalc()"></div>
+    <div><label>面談予約数（件・累計）</label><input type="number" id="a-yoyaku" value="23" oninput="saveAndCalc()"></div>
+    <div><label>面談実施数（件・累計）</label><input type="number" id="a-mendan" value="15" oninput="saveAndCalc()"></div>
+  </div>
+  <div class="i3">
+    <div><label>面談予約率（%）</label><input type="number" id="a-lrate" value="14.7" step="0.1" oninput="saveAndCalc()"></div>
+    <div><label>キャンセル率（%）</label><input type="number" id="a-cancel" value="34.8" step="0.1" oninput="saveAndCalc()"></div>
+    <div><label>契約率（%）</label><input type="number" id="a-close" value="26.7" step="0.1" oninput="saveAndCalc()"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="sec">KGI</div>
+  <div style="overflow-x:auto"><table class="kpi-table"><thead><tr>
+    <th style="min-width:110px">指標</th><th>当月目標</th><th>現時点目標</th><th>実績</th><th>月末着地想定</th><th>達成率</th><th>不足</th>
+  </tr></thead><tbody id="kgi-body"></tbody></table></div>
+</div>
+
+<div class="card">
+  <div class="sec">KPI</div>
+  <div style="overflow-x:auto"><table class="kpi-table"><thead><tr>
+    <th style="min-width:160px">指標</th><th>当月目標</th><th>現時点目標</th><th>実績</th><th>月末着地想定</th><th>達成率</th><th>不足</th>
+  </tr></thead><tbody id="kpi-body"></tbody></table></div>
+</div>
+
+<div class="card">
+  <div class="sec">改善診断 → 施策決定</div>
+  <div style="font-size:13px;color:#666;margin-bottom:14px">改善が必要なKPIをタップして施策を決める</div>
+  <div id="diag-list"></div>
+  <div id="hypo-area" style="display:none">
+    <div class="hypo-panel" id="hypo-inner"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="sec">決定した施策一覧 &amp; KGI着地シミュレーション</div>
+  <div class="proj-box">
+    <div>
+      <div style="font-size:11px;color:#888;margin-bottom:3px">施策後の月末KGI（契約数）着地想定</div>
+      <span style="font-size:24px;font-weight:700" id="施策-proj">—</span>
+      <span style="font-size:13px;color:#666"> / 目標 <span id="施策-target">—</span>件</span>
+    </div>
+    <div id="施策-status"></div>
+  </div>
+  <div id="施策-alert"></div>
+  <div id="施策-list"><div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0">施策がまだ決定されていません</div></div>
+</div>
+
+</div>
+
+<script>
+const WEEKDAYS=['日','月','火','水','木','金','土'];
+const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const STORAGE_KEY='kgi_dashboard_v1';
+let selDiag=null,answers={},committedActions=[],baseProj=0;
+let selectedDate=null,calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calOpen=false;
+
+const BN_DEF={
+  '契約数':{higher:true,effectKey:'keiyaku',effectRange:[0.2,0.4],lagDays:7,risk:'複数施策同時実行による原因特定困難',
+    qs:[{q:'現在の月末着地が目標を下回っている主因は？',type:'single',opts:['LINE追加数が少ない','面談予約率が低い','キャンセルが多い','契約率が低い','複合的']},{q:'営業と広告の連携頻度は？',type:'single',opts:['週次以上','月1回','ほぼなし']},{q:'今月残り日数で最も手を打てるのは？',type:'single',opts:['広告強化（PV・CTR）','LINE施策','面談〜契約率改善']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='LINE追加数が少ない'||a[0]==='複合的')acts.push({title:'広告予算を増額し配信ボリュームを拡大',timing:'今日〜明日',effect:'LINE追加数+15〜20%',lag:3});if(a[0]==='面談予約率が低い'||a[0]==='複合的')acts.push({title:'ステップLINEを見直し予約CTAを登録後48時間以内に配置',timing:'今週中',effect:'予約率+10〜15%',lag:5});if(a[0]==='キャンセルが多い'||a[0]==='複合的')acts.push({title:'予約翌日・前日の2回リマインドLINEを設定',timing:'今日中',effect:'キャンセル率-5〜8%',lag:3});if(a[0]==='契約率が低い'||a[0]==='複合的')acts.push({title:'営業と今週中にトークスクリプトのすり合わせをおこなう',timing:'今週中',effect:'契約率+5〜10%',lag:7});if(acts.length===0)acts.push({title:'全ファネルの数字を確認し最もギャップの大きいKPIから着手',timing:'今日中',effect:'要確認',lag:5});return acts;}},
+  '売上':{higher:true,effectKey:'uriage',effectRange:[0.1,0.3],lagDays:7,risk:'契約単価引き下げによる利益率悪化',
+    qs:[{q:'売上不足の主因は？',type:'single',opts:['契約数が少ない','契約単価が低い','入金タイミングのズレ']},{q:'高単価プランの提案はできていますか？',type:'single',opts:['できている','あまりできていない','プランがない']},{q:'既存顧客へのアップセルは？',type:'single',opts:['実施している','検討中','していない']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='契約数が少ない')acts.push({title:'契約数を増やす施策（ファネル改善）を優先して実施',timing:'今週中',effect:'売上+契約数比例',lag:7});if(a[0]==='契約単価が低い'||a[1]==='あまりできていない')acts.push({title:'高単価プランの訴求強化・提案スクリプトの整備',timing:'今週中',effect:'単価+10〜20%',lag:10});if(a[2]==='していない'||a[2]==='検討中')acts.push({title:'既存受講生へ上位プランの案内LINEを配信',timing:'今週中',effect:'アップセル率+5%',lag:5});if(acts.length===0)acts.push({title:'入金タイミングを確認し未入金リストをフォローアップ',timing:'今日中',effect:'入金率改善',lag:3});return acts;}},
+  '粗利':{higher:true,effectKey:'arari',effectRange:[0.1,0.2],lagDays:10,risk:'コスト削減による品質低下',
+    qs:[{q:'粗利を最も圧迫しているのは？',type:'single',opts:['人件費','外注費','その他コスト']},{q:'外注費の見直しをしていますか？',type:'single',opts:['定期的にしている','していない','できない']},{q:'業務の内製化できる箇所はありますか？',type:'single',opts:['ある','少しある','ない']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='外注費'||a[1]==='していない')acts.push({title:'外注費の見積もりを再取得し相見積もりで削減交渉',timing:'今週中',effect:'外注費-10〜15%',lag:14});if(a[2]==='ある'||a[2]==='少しある')acts.push({title:'内製化できる業務をリストアップし移管計画を立てる',timing:'今月中',effect:'固定費削減',lag:30});if(acts.length===0)acts.push({title:'コスト構造を再確認し削減余地を特定する',timing:'今週中',effect:'要確認',lag:10});return acts;}},
+  '広告費（効率）':{higher:false,effectKey:'adcost',effectRange:[-0.1,-0.2],lagDays:5,risk:'急激な予算変更によるアルゴリズム学習リセット',
+    qs:[{q:'現在の配信媒体（複数選択可）',type:'multi',opts:['meta','Google','TikTok','LINE','UNICORN']},{q:'勝ちクリエイティブは特定できていますか？',type:'single',opts:['特定できている','なんとなくわかる','わからない']},{q:'予算の集中先は？',type:'single',opts:['成果の高い媒体に集中','均等配分','なんとなく']}],
+    actionLogic:(a)=>{const acts=[];if(a[1]==='なんとなくわかる'||a[1]==='わからない')acts.push({title:'過去30日のCPO・CPAを媒体・クリエイティブ別に集計し勝ち筋を特定',timing:'今日中',effect:'無駄な広告費を削減',lag:3});if(a[2]==='均等配分'||a[2]==='なんとなく')acts.push({title:'成果の低い媒体の予算を成果の高い媒体へ移行（10〜20%ずつ）',timing:'今週中',effect:'CPO-10〜20%',lag:5});acts.push({title:'CTR・CVRが低い広告セットを停止し予算を集約',timing:'今日〜明日',effect:'広告効率+15%',lag:3});return acts;}},
+  '営業利益':{higher:true,effectKey:'eigyo',effectRange:[0.1,0.3],lagDays:14,risk:'短期コスト削減による成長機会喪失',
+    qs:[{q:'営業利益を最も圧迫しているのは？',type:'single',opts:['広告費','人件費','全社負担コスト','複合']},{q:'売上増 vs コスト削減どちらを優先しますか？',type:'single',opts:['売上増','コスト削減','両方同時']},{q:'固定費の見直しをしていますか？',type:'single',opts:['定期的にしている','していない']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='広告費')acts.push({title:'広告CPOを改善し同予算で契約数を増やす',timing:'今週中',effect:'利益率+5〜10%',lag:10});if(a[1]==='売上増'||a[1]==='両方同時')acts.push({title:'契約数・単価の改善を最優先に実施',timing:'今週中',effect:'売上比例で利益改善',lag:7});if(a[2]==='していない')acts.push({title:'固定費を一覧化し削減可能な項目を特定して交渉',timing:'今月中',effect:'固定費-5〜10%',lag:30});if(acts.length===0)acts.push({title:'P&Lの各行を確認し最もインパクトの大きい改善箇所を特定',timing:'今日中',effect:'要確認',lag:7});return acts;}},
+  'LINE追加数':{higher:true,effectKey:'line',effectRange:[0.15,0.3],lagDays:3,risk:'クリエイティブ審査否認・アカウント停止',
+    qs:[{q:'現在の配信媒体（複数選択可）',type:'multi',opts:['meta','Google','TikTok','LINE','UNICORN']},{q:'予算の消化状況は？',type:'single',opts:['予算余っている','ほぼ消化','予算切れ']},{q:'クリエイティブの状態（複数選択可）',type:'multi',opts:['勝ちクリエイティブがある','ABテスト中','本数が少ない（3本以下）','訴求軸がワンパターン']}],
+    actionLogic:(a)=>{const acts=[];if(a[1]==='予算余っている')acts.push({title:'日予算を20〜30%増額し配信ボリュームを拡大',timing:'今日中',effect:'LINE追加数+20〜30%',lag:2});if(Array.isArray(a[2])&&a[2].includes('本数が少ない（3本以下）'))acts.push({title:'新規クリエイティブを3〜5本追加入稿（訴求軸を変える）',timing:'今週中',effect:'CTR+0.1〜0.2%',lag:4});if(Array.isArray(a[2])&&a[2].includes('訴求軸がワンパターン'))acts.push({title:'実績訴求・感情訴求・未来訴求の3軸でクリエイティブをABテスト',timing:'今週中',effect:'CTR+0.15%',lag:5});if(a[1]==='予算切れ')acts.push({title:'翌月予算を前倒しで確保し上長に承認を取る',timing:'今日中',effect:'配信再開',lag:1});if(acts.length===0)acts.push({title:'配信媒体ごとのCPA・CTRを確認し最も効率の良い媒体に予算集中',timing:'今日中',effect:'LINE追加数+10〜20%',lag:3});return acts;}},
+  '面談予約数':{higher:true,effectKey:'yoyaku',effectRange:[0.15,0.25],lagDays:4,risk:'質の低いリードが増えて契約率が下がるリスク',
+    qs:[{q:'予約が取れないのはどの段階？',type:'single',opts:['LINEへの流入が少ない','LINE登録後に予約しない','リマインドが届いていない']},{q:'LINE配信の予約CTAは明確ですか？',type:'single',opts:['明確','やや曖昧','不明確']},{q:'予約のハードルとして考えられるもの（複数選択可）',type:'multi',opts:['長時間（60分以上）','オフラインのみ','日程の選択肢が少ない','申し込み方法がわかりにくい']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='LINEへの流入が少ない')acts.push({title:'広告予算を増やしLPへの流入を増加させる',timing:'今日中',effect:'予約数+流入比例',lag:3});if(a[0]==='LINE登録後に予約しない'||a[1]==='やや曖昧'||a[1]==='不明確')acts.push({title:'ステップLINEのメッセージを見直し予約ボタンをより目立たせる',timing:'今日〜明日',effect:'予約率+10〜15%',lag:3});if(Array.isArray(a[2])&&a[2].includes('日程の選択肢が少ない'))acts.push({title:'選べる面談日程を週3日→毎日に拡大',timing:'今週中',effect:'予約率+8〜12%',lag:3});if(Array.isArray(a[2])&&a[2].includes('オフラインのみ'))acts.push({title:'オンライン面談対応を追加しハードルを下げる',timing:'今週中',effect:'予約率+10%',lag:5});if(acts.length===0)acts.push({title:'LINE登録〜予約までのステップを見直しCTAを強化',timing:'今日中',effect:'予約率+10%',lag:4});return acts;}},
+  '面談実施数':{higher:true,effectKey:'mendan',effectRange:[0.1,0.2],lagDays:4,risk:'着座率改善施策がLINE予約率に悪影響する可能性',
+    qs:[{q:'面談実施数が少ない主因は？',type:'single',opts:['予約数自体が少ない','キャンセルが多い','両方']},{q:'予約後のリマインドは何回送っていますか？',type:'single',opts:['0回','1回','2回以上']},{q:'面談形式は？',type:'single',opts:['オンラインのみ','オフラインのみ','選べる']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='予約数自体が少ない'||a[0]==='両方')acts.push({title:'面談予約数を増やす施策（LINE配信・CTA改善）を先に実施',timing:'今日中',effect:'面談数+予約数比例',lag:3});if((a[0]==='キャンセルが多い'||a[0]==='両方')&&(a[1]==='0回'||a[1]==='1回'))acts.push({title:'予約翌日・前日の2回リマインドLINEを自動配信で設定',timing:'今日中',effect:'キャンセル率-8〜12%',lag:2});if(a[2]==='オフラインのみ')acts.push({title:'オンライン面談を追加選択肢として提供',timing:'今週中',effect:'着座率+10%',lag:5});if(acts.length===0)acts.push({title:'予約リストを確認し未着座の方にリマインドLINEを個別送信',timing:'今日中',effect:'着座率+5〜10%',lag:1});return acts;}},
+  '面談予約率':{higher:true,effectKey:'lrate',effectRange:[0.1,0.2],lagDays:5,risk:'ステップLINE設定ミスによる配信不具合',
+    qs:[{q:'LINE登録後の最初のメッセージはいつ届きますか？',type:'single',opts:['即時','1時間以内','翌日以降']},{q:'ステップLINEの本数は？',type:'single',opts:['1〜3本','4〜7本','8本以上']},{q:'予約CTAはいつ送っていますか？',type:'single',opts:['登録直後','2〜3日後','1週間後以降']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='翌日以降')acts.push({title:'登録直後に届くウェルカムメッセージに予約CTAを追加',timing:'今日中',effect:'予約率+10〜15%',lag:2});if(a[1]==='1〜3本')acts.push({title:'ステップLINEを7〜10本に増やし段階的に予約を促す',timing:'今週中',effect:'予約率+8〜12%',lag:5});if(a[2]==='1週間後以降')acts.push({title:'予約CTAの配信を登録後48時間以内に前倒し',timing:'今日中',effect:'予約率+10%',lag:3});if(acts.length===0)acts.push({title:'ステップLINEのA/Bテストを実施し予約率の高いパターンを特定',timing:'今週中',effect:'予約率+5〜15%',lag:7});return acts;}},
+  'キャンセル率':{higher:false,effectKey:'cancel',effectRange:[-0.05,-0.1],lagDays:4,risk:'リマインド過剰によるブロック増加',
+    qs:[{q:'予約後のリマインドは何回送っていますか？',type:'single',opts:['0回','1回','2回以上']},{q:'キャンセルの主な理由（複数選択可）',type:'multi',opts:['日程が合わない','意欲が下がった','忘れた','把握できていない']},{q:'着座ハードルを下げる工夫は？',type:'single',opts:['オンライン対応あり','オフラインのみ','特になし']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='0回'||a[0]==='1回')acts.push({title:'予約翌日・前日の2回リマインドLINEを自動送信に設定',timing:'今日中',effect:'キャンセル率-8〜12%',lag:2});if(Array.isArray(a[1])&&a[1].includes('日程が合わない'))acts.push({title:'日程変更を簡単にできるリスケLINEを送付',timing:'今日中',effect:'キャンセル率-5%',lag:2});if(Array.isArray(a[1])&&a[1].includes('意欲が下がった'))acts.push({title:'予約後にベネフィットを再確認するフォローLINEを追加',timing:'今週中',effect:'キャンセル率-5〜8%',lag:4});if(a[2]==='オフラインのみ')acts.push({title:'オンライン面談を選択肢に追加し日程調整の柔軟性を上げる',timing:'今週中',effect:'キャンセル率-5〜10%',lag:5});if(acts.length===0)acts.push({title:'キャンセル理由をアンケートで把握し対策を立てる',timing:'今週中',effect:'要確認',lag:7});return acts;}},
+  '契約率':{higher:true,effectKey:'close',effectRange:[0.05,0.15],lagDays:7,risk:'営業リソース不足・スクリプト変更の周知漏れ',
+    qs:[{q:'営業との連携頻度は？',type:'single',opts:['週次以上','月1回','ほぼ連携なし']},{q:'トークスクリプトは最新ですか？',type:'single',opts:['最新版あり','古いものあり','ない']},{q:'契約率が低い原因（複数選択可）',type:'multi',opts:['見込み顧客の質が低い','スクリプトが刺さっていない','クロージングのタイミング','分割・特典などオファーが弱い']}],
+    actionLogic:(a)=>{const acts=[];if(a[0]==='月1回'||a[0]==='ほぼ連携なし')acts.push({title:'営業と週次ミーティングを設定し勝ちトークと負けトークを共有',timing:'今週中',effect:'契約率+5〜10%',lag:7});if(a[1]==='古いものあり'||a[1]==='ない')acts.push({title:'最新の成約事例をもとにトークスクリプトを更新・共有',timing:'今週中',effect:'契約率+5〜8%',lag:7});if(Array.isArray(a[2])&&a[2].includes('分割・特典などオファーが弱い'))acts.push({title:'月末限定特典や分割プランを用意しクロージングのオファーを強化',timing:'今週中',effect:'契約率+5〜10%',lag:5});if(Array.isArray(a[2])&&a[2].includes('見込み顧客の質が低い'))acts.push({title:'広告のターゲティングを成約者属性に合わせて絞り込む',timing:'今週中',effect:'契約率+8%',lag:7});if(acts.length===0)acts.push({title:'直近の面談録音・メモを確認し離脱ポイントを特定',timing:'今日中',effect:'要確認',lag:5});return acts;}},
+  'CPA':{higher:false,effectKey:'cpa',effectRange:[-0.1,-0.2],lagDays:5,risk:'LP改変による一時的なCVR低下',
+    qs:[{q:'現在のLP CVRは把握できていますか？',type:'single',opts:['把握している','だいたいわかる','わからない']},{q:'ヒートマップは確認していますか？',type:'single',opts:['直近確認した','しばらく見ていない','未導入']},{q:'CPAが高い原因（複数選択可）',type:'multi',opts:['LPの訴求がズレている','フォームの離脱が多い','ターゲティングが広すぎる','クリエイティブの品質が低い']}],
+    actionLogic:(a)=>{const acts=[];if(a[1]==='しばらく見ていない'||a[1]==='未導入')acts.push({title:'ヒートマップを確認しLPの離脱ポイントを特定・改善',timing:'今週中',effect:'CVR+0.2〜0.3%',lag:5});if(Array.isArray(a[2])&&a[2].includes('フォームの離脱が多い'))acts.push({title:'フォームの入力項目を3項目以下に絞りLINE登録のハードルを下げる',timing:'今週中',effect:'CVR+0.2%',lag:4});if(Array.isArray(a[2])&&a[2].includes('ターゲティングが広すぎる'))acts.push({title:'成約者属性（年齢・職業・興味）に絞ったターゲティングに変更',timing:'今日〜明日',effect:'CPA-15〜20%',lag:5});if(Array.isArray(a[2])&&a[2].includes('クリエイティブの品質が低い'))acts.push({title:'CTRが低いクリエイティブを停止し勝ちクリエイティブに予算集約',timing:'今日中',effect:'CPA-10〜15%',lag:3});if(acts.length===0)acts.push({title:'CVRとCTRを確認しボトルネックがLPか広告かを特定',timing:'今日中',effect:'要確認',lag:3});return acts;}},
+  'CPO':{higher:false,effectKey:'cpo',effectRange:[-0.1,-0.2],lagDays:6,risk:'急激な予算変更によるアルゴリズム学習リセット',
+    qs:[{q:'CPOが高い原因（複数選択可）',type:'multi',opts:['面談数が少ない','契約率が低い','広告費が高い','複合的']},{q:'媒体別のCPOは把握できていますか？',type:'single',opts:['把握している','だいたいわかる','わからない']},{q:'勝ち広告セットに予算は集中していますか？',type:'single',opts:['集中している','やや分散','均等配分']}],
+    actionLogic:(a)=>{const acts=[];if(a[1]==='わからない')acts.push({title:'媒体・広告セット別のCPOを集計し最も効率の悪い配信を停止',timing:'今日中',effect:'CPO-10〜20%',lag:3});if(a[2]==='やや分散'||a[2]==='均等配分')acts.push({title:'CPOが目標以下の広告セットに予算を集約（低CPOセットに70%以上）',timing:'今日〜明日',effect:'CPO-10〜15%',lag:4});if(Array.isArray(a[0])&&a[0].includes('契約率が低い'))acts.push({title:'面談〜契約のプロセスを確認し営業スクリプトを改善',timing:'今週中',effect:'契約率+5〜10%',lag:7});if(acts.length===0)acts.push({title:'全チャネルのCPO・CPAを一覧化し優先改善対象を特定',timing:'今日中',effect:'要確認',lag:3});return acts;}},
+};
+
+const KGI_KEYS=['契約数','売上','粗利','広告費（効率）','営業利益'];
+const KPI_KEYS=['LINE追加数','面談予約数','面談実施数','面談予約率','キャンセル率','契約率','CPA','CPO'];
+
+function saveData(){
+  const data={
+    targets:{days:v('t-days'),keiyaku:v('t-keiyaku'),uriage:v('t-uriage'),adcost:v('t-adcost'),line:v('t-line'),yoyaku:v('t-yoyaku'),mendan:v('t-mendan'),lrate:v('t-lrate'),cancel:v('t-cancel'),close:v('t-close'),cpa:v('t-cpa'),cpo:v('t-cpo')},
+    actual:{keiyaku:v('a-keiyaku'),uriage:v('a-uriage'),adcost:v('a-adcost'),line:v('a-line'),yoyaku:v('a-yoyaku'),mendan:v('a-mendan'),lrate:v('a-lrate'),cancel:v('a-cancel'),close:v('a-close')},
+    selectedDate:selectedDate?selectedDate.toISOString():null,
+    committedActions,
+    savedAt:new Date().toISOString()
+  };
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));showSaveBadge();}catch(e){}
+}
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(data.targets){
+      const t=data.targets;
+      setVal('t-days',t.days);setVal('t-keiyaku',t.keiyaku);setVal('t-uriage',t.uriage);setVal('t-adcost',t.adcost);setVal('t-line',t.line);setVal('t-yoyaku',t.yoyaku);setVal('t-mendan',t.mendan);setVal('t-lrate',t.lrate);setVal('t-cancel',t.cancel);setVal('t-close',t.close);setVal('t-cpa',t.cpa);setVal('t-cpo',t.cpo);
+    }
+    if(data.actual){
+      const a=data.actual;
+      setVal('a-keiyaku',a.keiyaku);setVal('a-uriage',a.uriage);setVal('a-adcost',a.adcost);setVal('a-line',a.line);setVal('a-yoyaku',a.yoyaku);setVal('a-mendan',a.mendan);setVal('a-lrate',a.lrate);setVal('a-cancel',a.cancel);setVal('a-close',a.close);
+    }
+    if(data.selectedDate) selectedDate=new Date(data.selectedDate);
+    if(data.committedActions) committedActions=data.committedActions;
+    if(data.savedAt){
+      const d=new Date(data.savedAt);
+      document.getElementById('last-saved').textContent='最終保存：'+d.getMonth()+1+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    }
+  }catch(e){}
+}
+
+function setVal(id,val){if(val!=null)document.getElementById(id).value=val;}
+function showSaveBadge(){
+  const b=document.getElementById('save-badge');
+  b.style.display='inline-block';
+  const d=new Date();
+  document.getElementById('last-saved').textContent='最終保存：'+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  clearTimeout(showSaveBadge._t);
+  showSaveBadge._t=setTimeout(()=>b.style.display='none',2000);
+}
+function saveAndCalc(){saveData();calc();}
+
+function toggleCal(){calOpen=!calOpen;document.getElementById('cal-wrap').style.display=calOpen?'block':'none';if(calOpen)renderCal();}
+function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+function renderCal(){
+  document.getElementById('cal-title').textContent=calYear+'年 '+MONTHS[calMonth];
+  const today=new Date(),fd=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate();
+  today.setHours(0,0,0,0);
+  let h=WEEKDAYS.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  for(let i=0;i<fd;i++)h+=`<div></div>`;
+  for(let d=1;d<=dim;d++){
+    const td=new Date(calYear,calMonth,d);
+    const iF=td>today,iS=selectedDate&&td.toDateString()===selectedDate.toDateString(),iT=td.toDateString()===today.toDateString();
+    h+=`<button class="cal-day${iS?' selected':''}${iT&&!iS?' today-marker':''}"${iF?' disabled':''} onclick="selectDay(${calYear},${calMonth},${d})">${d}</button>`;
+  }
+  document.getElementById('cal-grid').innerHTML=h;
+}
+function selectDay(y,m,d){selectedDate=new Date(y,m,d);calOpen=false;document.getElementById('cal-wrap').style.display='none';updateDateUI();saveAndCalc();}
+function updateDateUI(){
+  if(!selectedDate)return;
+  const d=selectedDate.getDate(),wd=WEEKDAYS[selectedDate.getDay()],mo=selectedDate.getMonth()+1,prev=d-1;
+  document.getElementById('date-btn-label').textContent=mo+'月'+d+'日（'+wd+'）';
+  document.getElementById('date-btn-sub').textContent=prev+'日分の累計実績を入力';
+  document.getElementById('hint-today').textContent=d+'日';
+  document.getElementById('hint-prev').textContent=prev+'日まで（'+prev+'日分）の累計実績';
+}
+function getElapsed(){
+  if(!selectedDate)return 0.01;
+  const prev=selectedDate.getDate()-1;
+  return Math.max(0.01,prev/(parseInt(document.getElementById('t-days').value)||31));
+}
+function v(id){return parseFloat(document.getElementById(id).value)||0;}
+function fmtN(n,d=1){return Number.isInteger(n)?n.toString():n.toFixed(d);}
+function projVal(a){const e=getElapsed();return e>0?a/e:0;}
+function ar(p,t){return t>0?Math.min(200,Math.round(p/t*100)):0;}
+function colorClass(r,hb=true){const rr=hb?r:200-r;return rr>=95?'val-ok':rr>=70?'val-warn':'val-ng';}
+function pillCls(r,hb=true){const rr=hb?r:200-r;return rr>=95?'pill-ok':rr>=70?'pill-warn':'pill-ng';}
+function renderRow(label,tM,actual,isRate=false,lb=false,unit='件',dec=0){
+  const hb=!lb,tNow=isRate?tM:tM*getElapsed(),pj=isRate?actual:projVal(actual),rate=ar(pj,tM),sh=isRate?null:Math.max(0,Math.round(tM-pj));
+  const fmt=n=>{if(unit==='件')return Math.round(n)+'件';if(unit==='%')return fmtN(n,1)+'%';if(unit==='万')return fmtN(n,dec)+'万';return fmtN(n,dec);};
+  return`<tr><td>${label}</td><td>${fmt(tM)}</td><td class="val-muted">${isRate?'—':fmt(tNow)}</td><td class="${colorClass(rate,hb)}">${fmt(actual)}</td><td>${isRate?'—':fmt(pj)}</td><td><span class="pill ${pillCls(rate,hb)}">${rate}%</span></td><td class="val-muted">${sh!==null?(sh>0?fmt(sh):'✓'):'—'}</td></tr>`;
+}
+function calcProjection(ov={}){
+  const e=getElapsed(),l=ov.line!=null?ov.line:v('a-line'),lr=ov.lrate!=null?ov.lrate:v('a-lrate'),c=ov.cancel!=null?ov.cancel:v('a-cancel'),cl=ov.close!=null?ov.close:v('a-close');
+  return Math.round((l/e)*(lr/100)*(1-c/100)*(cl/100));
+}
+function getDiagRate(key){
+  const aK=v('a-keiyaku'),aU=v('a-uriage'),aAd=v('a-adcost'),aLine=v('a-line'),aY=v('a-yoyaku'),aM=v('a-mendan');
+  const m={'契約数':ar(projVal(aK),v('t-keiyaku')),'売上':ar(projVal(aU),v('t-uriage')),'粗利':ar(projVal(aU*0.955),v('t-uriage')*0.955),'広告費（効率）':ar(projVal(aAd),v('t-adcost')),'営業利益':ar(projVal(aU*0.68),v('t-uriage')*0.68),'LINE追加数':ar(projVal(aLine),v('t-line')),'面談予約数':ar(projVal(aY),v('t-yoyaku')),'面談実施数':ar(projVal(aM),v('t-mendan')),'面談予約率':ar(v('a-lrate'),v('t-lrate')),'キャンセル率':ar(v('a-cancel'),v('t-cancel')),'契約率':ar(v('a-close'),v('t-close')),'CPA':ar(aLine>0?aAd/aLine:0,v('t-cpa')),'CPO':ar(aK>0?aAd/aK:0,v('t-cpo'))};
+  return m[key]||0;
+}
+function calc(){
+  updateDateUI();
+  const tK=v('t-keiyaku'),aK=v('a-keiyaku'),tU=v('t-uriage'),aU=v('a-uriage'),tAd=v('t-adcost'),aAd=v('a-adcost'),tLine=v('t-line'),aLine=v('a-line'),tY=v('t-yoyaku'),aY=v('a-yoyaku'),tM=v('t-mendan'),aM=v('a-mendan'),tLrate=v('t-lrate'),aLrate=v('a-lrate'),tCancel=v('t-cancel'),aCancel=v('a-cancel'),tClose=v('t-close'),aClose=v('a-close'),tCpa=v('t-cpa'),tCpo=v('t-cpo'),aCpa=aLine>0?aAd/aLine:0,aCpo=aK>0?aAd/aK:0;
+  document.getElementById('kgi-body').innerHTML=renderRow('契約数',tK,aK,false,false,'件',0)+renderRow('売上',tU,aU,false,false,'万',0)+renderRow('粗利',tU*0.955,aU*0.955,false,false,'万',0)+renderRow('広告費',tAd,aAd,false,true,'万',0)+renderRow('営業利益',tU*0.68,aU*0.68,false,false,'万',0);
+  document.getElementById('kpi-body').innerHTML=renderRow('LINE追加数',tLine,aLine,false,false,'件',0)+renderRow('面談予約数',tY,aY,false,false,'件',0)+renderRow('面談実施数',tM,aM,false,false,'件',0)+renderRow('面談予約率（LINE blended）',tLrate,aLrate,true,false,'%',1)+renderRow('キャンセル率（blended）',tCancel,aCancel,true,true,'%',1)+renderRow('契約率（blended）',tClose,aClose,true,false,'%',1)+renderRow('CPA（全体blended）',tCpa,aCpa,true,true,'万',1)+renderRow('CPO（全体blended）',tCpo,aCpo,true,true,'万',1);
+  baseProj=calcProjection();
+  const allKeys=[...KGI_KEYS,...KPI_KEYS];
+  const diagItems=allKeys.map(key=>{const def=BN_DEF[key],rate=getDiagRate(key),hb=def?def.higher:true;return{key,rate,hb};}).sort((a,b)=>(a.hb?a.rate:200-a.rate)-(b.hb?b.rate:200-b.rate));
+  let html='',prevSec='';
+  diagItems.forEach(item=>{
+    const eff=item.hb?item.rate:200-item.rate,sec=eff<70?'要改善':eff<95?'注意':'良好';
+    const dotCol=eff<70?'#A32D2D':eff<95?'#633806':'#27500A';
+    const secCol=eff<70?'#A32D2D':eff<95?'#633806':'#27500A';
+    if(sec!==prevSec){html+=`<div class="diag-sec-label" style="color:${secCol}">${sec}</div>`;prevSec=sec;}
+    const isKgi=KGI_KEYS.includes(item.key),isActive=selDiag===item.key;
+    html+=`<button class="diag-btn${isActive?' active':''}" onclick="selectDiag('${item.key}')"><div class="diag-dot" style="background:${dotCol}"></div><div style="flex:1"><div style="font-size:13px;font-weight:600">${item.key} <span style="font-size:10px;background:#f0ede7;color:#888;padding:1px 7px;border-radius:10px;margin-left:4px;font-weight:600">${isKgi?'KGI':'KPI'}</span></div><div style="font-size:11px;color:#888;margin-top:2px">目標比 ${item.rate}%</div></div><span style="font-size:14px;color:#ccc">${isActive?'▲':'▼'}</span></button>`;
+  });
+  document.getElementById('diag-list').innerHTML=html;
+  updateCommittedPanel();
+}
+function selectDiag(key){
+  if(selDiag===key){selDiag=null;answers={};document.getElementById('hypo-area').style.display='none';calc();return;}
+  selDiag=key;answers={};
+  document.getElementById('hypo-area').style.display='block';
+  calc();renderHypoSteps();
+  setTimeout(()=>document.getElementById('hypo-area').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+function renderHypoSteps(){
+  const def=BN_DEF[selDiag];if(!def)return;
+  const today=selectedDate?selectedDate.getDate():new Date().getDate();
+  const remaining=(parseInt(document.getElementById('t-days').value)||31)-today+1;
+  const allAnswered=def.qs.every((_,qi)=>def.qs[qi].type==='multi'?(answers[qi]&&answers[qi].length>0):(answers[qi]!=null));
+  const stepsHtml=def.qs.map((q,qi)=>{
+    const isMulti=q.type==='multi',selVals=isMulti?(answers[qi]||[]):null,selSingle=answers[qi];
+    const opts=q.opts.map(o=>{
+      const isSel=isMulti?(selVals&&selVals.includes(o)):(selSingle===o);
+      const btnCls=`choice-btn ${isMulti?'choice-btn-multi':'choice-btn-single'}${isSel?' sel':''}`;
+      const chk=isMulti?`<span class="check-box">${isSel?'✓':''}</span>`:'';
+      return`<button class="${btnCls}" onclick="selectAns(${qi},${JSON.stringify(o)},${isMulti})">${chk}<span>${o}</span></button>`;
+    }).join('');
+    return`<div class="step-wrap"><div class="step-header"><div class="step-num">${qi+1}</div><div class="step-q">${q.q}</div><span class="type-badge ${isMulti?'type-multi':'type-single'}">${isMulti?'複数選択':'1つ選ぶ'}</span></div><div class="choice-row">${opts}</div></div>`;
+  }).join('');
+  const actionsHtml=allAnswered?`<div class="action-out"><div style="font-size:12px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:.03em">推奨アクション（残り${remaining}日）</div>${def.actionLogic(answers).map((a,i)=>`<div class="action-item"><div class="action-pri" style="background:${i===0?'#A32D2D':i===1?'#633806':'#888'}"></div><div><div class="action-title">${a.title}</div><div class="action-meta">着手：${a.timing} ／ 効果発現：約${a.lag}日後 ／ リスク：${def.risk}</div><div class="action-effect">期待効果：${a.effect}</div></div></div>`).join('')}<button class="commit-btn" onclick="commitAction()">これらの施策を決定する</button></div>`:`<div class="pending-hint">すべての質問に回答するとアクションが表示されます</div>`;
+  document.getElementById('hypo-inner').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:16px">「${selDiag}」の改善施策を決める</div>${stepsHtml}${actionsHtml}`;
+}
+function selectAns(qi,val,isMulti){
+  if(isMulti){if(!answers[qi])answers[qi]=[];const idx=answers[qi].indexOf(val);if(idx>=0)answers[qi].splice(idx,1);else answers[qi].push(val);}
+  else{answers[qi]=val;}
+  renderHypoSteps();
+}
+function commitAction(){
+  const def=BN_DEF[selDiag];
+  const ep=Math.abs((def.effectRange[0]+def.effectRange[1])/2);
+  const ov={};
+  if(def.effectKey==='line')ov.line=v('a-line')*(1+ep);
+  else if(def.effectKey==='lrate')ov.lrate=v('a-lrate')*(1+ep);
+  else if(def.effectKey==='cancel')ov.cancel=v('a-cancel')*(1-ep);
+  else if(def.effectKey==='close')ov.close=v('a-close')*(1+ep);
+  const acts=def.actionLogic(answers),effProj=calcProjection(ov),gain=effProj-baseProj;
+  committedActions.push({key:selDiag,acts,effProj,gain,lagDays:def.lagDays,risk:def.risk,ts:Date.now()});
+  selDiag=null;answers={};
+  document.getElementById('hypo-area').style.display='none';
+  saveData();updateCommittedPanel();calc();
+}
+function removeAction(ts){committedActions=committedActions.filter(a=>a.ts!==ts);saveData();updateCommittedPanel();calc();}
+function updateCommittedPanel(){
+  const tK=v('t-keiyaku'),tGain=committedActions.reduce((s,a)=>s+a.gain,0),fp=baseProj+tGain;
+  document.getElementById('施策-proj').textContent=fp+'件';
+  document.getElementById('施策-target').textContent=tK;
+  const rate=tK>0?Math.round(fp/tK*100):0,pc=rate>=95?'pill-ok':rate>=70?'pill-warn':'pill-ng',lbl=rate>=95?'達成見込み':rate>=70?'要追加施策':'危険水域';
+  document.getElementById('施策-status').innerHTML=`<span class="pill ${pc}">${lbl}（${rate}%）</span>`;
+  if(committedActions.length===0){document.getElementById('施策-alert').innerHTML='';document.getElementById('施策-list').innerHTML='<div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0">施策がまだ決定されていません</div>';return;}
+  document.getElementById('施策-alert').innerHTML=fp<tK?`<div class="alert-box">施策が足りません。このままでは月末に <strong>${tK-fp}件</strong> 不足します。施策を追加してください。</div>`:`<div class="success-box">決定した施策で月末KGI達成の見込みです。実行状況を毎日確認しましょう。</div>`;
+  document.getElementById('施策-list').innerHTML=committedActions.map(a=>`<div class="施策card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><div style="font-size:13px;font-weight:700">${a.key}の施策（${a.acts.length}件）</div><div style="font-size:11px;color:#888;margin-top:3px;line-height:1.6">${a.acts.map(ac=>ac.title).join(' ／ ')}</div></div><button class="remove-btn" onclick="removeAction(${a.ts})">削除</button></div><div style="font-size:13px;color:#27500A;font-weight:700">+${a.gain}件（${baseProj}件 → ${a.effProj}件）</div></div>`).join('');
+}
+function toggleSection(bId,iId){const b=document.getElementById(bId),icon=document.getElementById(iId),open=b.style.maxHeight!=='0px'&&b.style.maxHeight!=='';b.style.maxHeight=open?'0':'700px';icon.classList.toggle('open',!open);}
+
+loadData();
+updateDateUI();
+calc();
+</script>
+</body>
+</html>
